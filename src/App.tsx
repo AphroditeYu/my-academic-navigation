@@ -32,17 +32,18 @@ import {
   CloudSun,
   AlertCircle,
   ArrowRight,
-  Phone,
-  Link as LinkIcon
+  Phone
 } from "lucide-react";
 import MusicPlayer from "./MusicPlayer";
 import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./types";
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
 
-function SiteIcon({ className = "w-5 h-5" }: { logo?: string; className?: string }) {
+function SiteIcon({ label, className = "w-5 h-5" }: { logo?: string; label?: string; className?: string }) {
+  const marker = (label || "站").trim().slice(0, 1).toUpperCase();
+
   return (
-    <span className={`${className} rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 inline-flex items-center justify-center shrink-0`}>
-      <LinkIcon className="w-3.5 h-3.5" />
+    <span className={`${className} rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 inline-flex items-center justify-center shrink-0 text-[11px] font-bold leading-none`}>
+      {marker}
     </span>
   );
 }
@@ -607,49 +608,74 @@ export default function App() {
 
         {/* ================================= MAIN CONTENT BENTO GRID ================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:hidden -mx-2">
-            <div className="overflow-x-auto px-2 pb-1">
-              <div className="flex gap-2 min-w-max">
-                <button
-                  onClick={() => {
-                    setSelectedCategory("all");
-                    setWritingExpanded(false);
-                    setSelectedWritingSubId(null);
-                  }}
-                  className={`h-12 px-4 rounded-xl border text-sm font-semibold flex items-center gap-2 shrink-0 transition-all ${selectedCategory === "all"
-                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                    : "bg-white text-slate-600 border-slate-200"
-                    }`}
-                >
-                  <span>全部</span>
-                  <span className={`text-[11px] px-1.5 py-0.5 rounded ${selectedCategory === "all" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"}`}>
-                    {categories.length}
-                  </span>
-                </button>
+          <div className="lg:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setWritingExpanded(false);
+                  setSelectedWritingSubId(null);
+                }}
+                className={`min-h-[64px] rounded-xl border px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-all ${selectedCategory === "all"
+                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
+                  }`}
+              >
+                <span className="font-semibold text-sm">全部</span>
+                <span className={`text-[11px] px-2 py-0.5 rounded ${selectedCategory === "all" ? "bg-white/15 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+                  {categories.length}
+                </span>
+              </button>
 
-                {categories.map((cat) => {
-                  const isActive = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        const isWriting = cat.id === "writing";
-                        setSelectedCategory(cat.id);
-                        setWritingExpanded(isWriting);
-                        setSelectedWritingSubId(isWriting ? (cat.links[0]?.id ?? null) : null);
-                      }}
-                      className={`h-12 px-4 rounded-xl border text-sm font-semibold flex items-center gap-2 shrink-0 transition-all ${isActive
-                        ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                        : "bg-white text-slate-600 border-slate-200"
-                        }`}
-                    >
+              {categories.map((cat) => {
+                const isActive = selectedCategory === cat.id;
+                const isWriting = cat.id === "writing";
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setWritingExpanded(isWriting);
+                      setSelectedWritingSubId(isWriting ? (selectedWritingSubId || cat.links[0]?.id || null) : null);
+                    }}
+                    className={`min-h-[64px] rounded-xl border px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-all ${isActive
+                      ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
+                      }`}
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
                       {getIcon(cat.icon)}
-                      <span>{cat.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      <span className="font-semibold text-sm truncate">{cat.name}</span>
+                    </span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded shrink-0 ${isActive ? "bg-white/15 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+                      {getCombinedLinks(cat).length}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+
+            {selectedCategory === "writing" && (
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="grid grid-cols-2 gap-2">
+                  {(categories.find(c => c.id === "writing")?.links || []).map((link: any) => {
+                    const isActive = selectedWritingSubId === link.id;
+                    return (
+                      <button
+                        key={link.id}
+                        onClick={() => setSelectedWritingSubId(link.id)}
+                        className={`min-h-[44px] rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-all ${isActive
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                      >
+                        {link.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* LEFT COLUMN: Categories Sidebar & Quick Stats (lg:col-span-3) */}
@@ -859,7 +885,7 @@ export default function App() {
                                 <div>
                                   <div className="flex items-center justify-between gap-1 mb-1">
                                     <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
-                                      {sub.logo && <SiteIcon logo={sub.logo} />}
+                                      {sub.logo && <SiteIcon logo={sub.logo} label={sub.name} />}
                                       {sub.name}
                                     </span>
                                     <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
@@ -886,7 +912,7 @@ export default function App() {
                             <div>
                               <div className="flex items-center justify-between gap-1 mb-1">
                                 <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
-                                  {link.logo ? <SiteIcon logo={link.logo} /> : link.isCustom ? <SiteIcon /> : null}
+                                  {link.logo ? <SiteIcon logo={link.logo} label={link.name} /> : link.isCustom ? <SiteIcon label={link.name} /> : null}
                                   {link.name}
                                 </span>
                                 <div className="flex items-center gap-1 shrink-0">

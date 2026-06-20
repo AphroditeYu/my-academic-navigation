@@ -38,13 +38,28 @@ import MusicPlayer from "./MusicPlayer";
 import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./types";
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
 
-function SiteIcon({ label, className = "w-5 h-5" }: { logo?: string; label?: string; className?: string }) {
+function SiteIcon({ logo, label, className = "w-5 h-5" }: { logo?: string; label?: string; className?: string }) {
   const marker = (label || "站").trim().slice(0, 1).toUpperCase();
+  const [imgError, setImgError] = useState(false);
+
+  if (!logo || imgError) {
+    return (
+      <span className={`${className} rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 inline-flex items-center justify-center shrink-0 text-[11px] font-bold leading-none`}>
+        {marker}
+      </span>
+    );
+  }
+
+  // 提取干净的域名（去掉协议头、路径、末尾斜杠），保证传给favicon服务的是纯域名
+  const cleanDomain = logo.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
   return (
-    <span className={`${className} rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 inline-flex items-center justify-center shrink-0 text-[11px] font-bold leading-none`}>
-      {marker}
-    </span>
+    <img
+      src={`https://api.iowen.cn/favicon/${cleanDomain}.png`}
+      alt={marker}
+      onError={() => setImgError(true)}
+      className={`${className} rounded-md object-contain shrink-0 bg-white`}
+    />
   );
 }
 
@@ -120,6 +135,9 @@ export default function App() {
 
   // Expand/Collapse all categories
   const [allCategoriesExpanded, setAllCategoriesExpanded] = useState<boolean>(true);
+
+  // Mobile category tab list collapse (点击图标收起/展开分类网格)
+  const [mobileCategoryOpen, setMobileCategoryOpen] = useState<boolean>(true);
 
   const [writingExpanded, setWritingExpanded] = useState<boolean>(false);
   const [selectedWritingSubId, setSelectedWritingSubId] = useState<string | null>(null);
@@ -609,6 +627,24 @@ export default function App() {
         {/* ================================= MAIN CONTENT BENTO GRID ================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <div className="lg:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+            <button
+              onClick={() => setMobileCategoryOpen(!mobileCategoryOpen)}
+              className="w-full flex items-center justify-between mb-2 cursor-pointer"
+            >
+              <span className="font-semibold text-sm flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                🧭&nbsp;学术分类
+              </span>
+              <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${mobileCategoryOpen ? "rotate-90" : ""}`} />
+            </button>
+
+            <div
+              style={{
+                maxHeight: mobileCategoryOpen ? "1200px" : "0px",
+                overflow: "hidden",
+                transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
+                opacity: mobileCategoryOpen ? 1 : 0,
+              }}
+            >
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
@@ -676,6 +712,7 @@ export default function App() {
                 </div>
               </div>
             )}
+            </div>
           </div>
 
           {/* LEFT COLUMN: Categories Sidebar & Quick Stats (lg:col-span-3) */}

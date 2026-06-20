@@ -32,11 +32,39 @@ import {
   CloudSun,
   AlertCircle,
   ArrowRight,
-  Phone
+  Phone,
+  Link as LinkIcon
 } from "lucide-react";
 import MusicPlayer from "./MusicPlayer";
 import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./types";
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
+
+function SiteIcon({ logo, className = "w-5 h-5" }: { logo?: string; className?: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!logo || hasError) {
+    return (
+      <span className={`${className} rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 inline-flex items-center justify-center shrink-0`}>
+        <LinkIcon className="w-3.5 h-3.5" />
+      </span>
+    );
+  }
+
+  const domain = logo
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .split("/")[0];
+
+  return (
+    <img
+      src={`https://${domain}/favicon.ico`}
+      alt=""
+      className={`${className} rounded-sm object-contain shrink-0`}
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
 export default function App() {
   // Navigation & Category Filtering
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
@@ -610,16 +638,7 @@ export default function App() {
                 </span>
               </div>
 
-              {/* Sidebar toggle for mobile */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="w-full md:hidden mb-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg font-medium text-xs flex justify-between items-center text-slate-600"
-              >
-                <span>{selectedCategory === "all" ? "全部展开" : categories.find(c => c.id === selectedCategory)?.name}</span>
-                <span>{sidebarOpen ? "收起传送" : "展开传送"}</span>
-              </button>
-
-              <div className={`space-y-2.5 ${sidebarOpen ? "block" : "hidden md:block"}`}>
+              <div className={`space-y-2 md:space-y-2.5 ${sidebarOpen ? "block" : "hidden md:block"}`}>
                 <button
                   onClick={() => {
                     setAllCategoriesExpanded(!allCategoriesExpanded);
@@ -627,7 +646,7 @@ export default function App() {
                     setWritingExpanded(false);
                     setSelectedWritingSubId(null);
                   }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === "all"
+                  className={`w-full flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === "all"
                     ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
                     : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
                     }`}
@@ -648,7 +667,7 @@ export default function App() {
                     opacity: allCategoriesExpanded ? 1 : 0,
                   }}
                 >
-                  <div className="space-y-2.5 pt-1.5">
+                  <div className="space-y-2 md:space-y-2.5 pt-1.5">
                     {categories.map((cat, idx) => {
                       const combinedCount = getCombinedLinks(cat).length;
                       const isWriting = cat.id === "writing";
@@ -671,7 +690,7 @@ export default function App() {
                               opacity: allCategoriesExpanded ? 1 : 0,
                               transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease",
                             }}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === cat.id
+                            className={`w-full flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === cat.id
                               ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
                               : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
                               }`}
@@ -798,7 +817,7 @@ export default function App() {
                     })()}
 
                     {/* Standard & custom grid links inside category */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3.5">
                       {cat.links.map((link: any) => {
                         // 论文写作分类且有subLinks：选中时展示子工具，未选中时隐藏
                         if (link.subLinks) {
@@ -810,24 +829,17 @@ export default function App() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ animationDelay: `${subIdx * 60}ms` }}
-                                className="group border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 transition-all text-left relative flex flex-col justify-between h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900 animate-fade-in-sub"
+                                className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900 animate-fade-in-sub"
                               >
                                 <div>
                                   <div className="flex items-center justify-between gap-1 mb-1">
                                     <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
-                                      {sub.logo && (
-                                        <img
-                                          src={`https://www.google.com/s2/favicons?domain=${sub.logo}&sz=32`}
-                                          alt=""
-                                          className="w-5 h-5 rounded-sm object-contain shrink-0"
-                                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                        />
-                                      )}
+                                      {sub.logo && <SiteIcon logo={sub.logo} />}
                                       {sub.name}
                                     </span>
                                     <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
                                   </div>
-                                  <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-3">
+                                  <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-3">
                                     {sub.description}
                                   </p>
                                 </div>
@@ -844,19 +856,12 @@ export default function App() {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 transition-all text-left relative flex flex-col justify-between h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900"
+                            className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900"
                           >
                             <div>
                               <div className="flex items-center justify-between gap-1 mb-1">
                                 <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
-                                  {link.logo ? (
-                                    <img
-                                      src={`https://www.google.com/s2/favicons?domain=${link.logo}&sz=32`}
-                                      alt=""
-                                      className="w-5 h-5 rounded-sm object-contain shrink-0"
-                                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                    />
-                                  ) : link.isCustom ? <span>🔗</span> : null}
+                                  {link.logo ? <SiteIcon logo={link.logo} /> : link.isCustom ? <SiteIcon /> : null}
                                   {link.name}
                                 </span>
                                 <div className="flex items-center gap-1 shrink-0">
@@ -872,7 +877,7 @@ export default function App() {
                                   <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
                                 </div>
                               </div>
-                              <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-2">
+                              <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-2">
                                 {link.description}
                               </p>
                             </div>

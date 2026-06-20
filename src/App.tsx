@@ -123,7 +123,7 @@ export default function App() {
   // Diandian Cat Images State
   const [diandianIndex, setDiandianIndex] = useState<number>(0);
   const [diandianPets, setDiandianPets] = useState<number>(0);
-  const ASSETS_BASE_URL = "https://raw.githubusercontent.com/AphroditeYu/my-site-assets/main";
+  const ASSETS_BASE_URL = "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com";
   const diandianImages = [
     {
       src: `${ASSETS_BASE_URL}/images/diandian_pose1.jpg`,
@@ -1081,7 +1081,7 @@ export default function App() {
                   {/* 二维码图片 */}
                   <div className="w-48 h-48 rounded-2xl shadow-xl overflow-hidden border border-gray-200">
                     <img
-                      src="https://raw.githubusercontent.com/AphroditeYu/my-site-assets/main/images/wechat_code.jpg"
+                      src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/wechat_code.jpg"
                       alt="微信二维码"
                       className="w-full h-full object-cover"
                     />
@@ -1128,7 +1128,7 @@ export default function App() {
                 <div className="w-44 h-44 bg-slate-50 border border-slate-200 mx-auto rounded-xl flex flex-col items-center justify-center p-3 relative">
                   {/* Styled fake cute QR indicator */}
                   <div className="w-full h-full bg-white border border-black rounded-lg p-1.5 flex flex-col justify-between text-emerald-400 font-mono text-[7px] text-left">
-                    <img src="https://raw.githubusercontent.com/AphroditeYu/my-site-assets/main/images/qrcode.jpg" alt="微信公众号二维码" className="w-full h-full object-cover rounded-2xl" />
+                    <img src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg" alt="微信公众号二维码" className="w-full h-full object-cover rounded-2xl" />
                   </div>
                 </div>
                 <h4 className="text-sm font-black text-slate-900 mt-4 font-serif">

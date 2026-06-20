@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 /* 音乐与封面图片均存放于 GitHub 仓库，通过直链引用 */
-const BASE_URL = "https://raw.githubusercontent.com/AphroditeYu/my-site-assets/main";
+const BASE_URL = "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com";
 const PLAYLIST_JSON_URL = `${BASE_URL}/playlist.json?t=${Date.now()}`; // 加时间戳防止缓存导致拿不到最新歌单
 
 interface PlaylistEntry {

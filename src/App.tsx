@@ -39,29 +39,11 @@ import MusicPlayer from "./MusicPlayer";
 import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./types";
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
 
-function SiteIcon({ logo, className = "w-5 h-5" }: { logo?: string; className?: string }) {
-  const [hasError, setHasError] = useState(false);
-
-  if (!logo || hasError) {
-    return (
-      <span className={`${className} rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 inline-flex items-center justify-center shrink-0`}>
-        <LinkIcon className="w-3.5 h-3.5" />
-      </span>
-    );
-  }
-
-  const domain = logo
-    .replace(/^https?:\/\//i, "")
-    .replace(/^www\./i, "")
-    .split("/")[0];
-
+function SiteIcon({ className = "w-5 h-5" }: { logo?: string; className?: string }) {
   return (
-    <img
-      src={`https://${domain}/favicon.ico`}
-      alt=""
-      className={`${className} rounded-sm object-contain shrink-0`}
-      onError={() => setHasError(true)}
-    />
+    <span className={`${className} rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 inline-flex items-center justify-center shrink-0`}>
+      <LinkIcon className="w-3.5 h-3.5" />
+    </span>
   );
 }
 
@@ -76,9 +58,8 @@ export default function App() {
   const [customBookmarks, setCustomBookmarks] = useState<CustomBookmark[]>(() => {
     try {
       const stored = localStorage.getItem("custom_bookmarks");
-      return stored ? JSON.parse(stored) : [
-        { id: "cb1", categoryId: "tools", name: "学术猫论坛", url: "https://xueshumao.com", description: "次元主人的秘密科学基地" }
-      ];
+      const parsed = stored ? JSON.parse(stored) : [];
+      return parsed.filter((item: CustomBookmark) => item.id !== "cb1" && item.url !== "https://xueshumao.com");
     } catch {
       return [];
     }
@@ -626,9 +607,53 @@ export default function App() {
 
         {/* ================================= MAIN CONTENT BENTO GRID ================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <div className="lg:hidden -mx-2">
+            <div className="overflow-x-auto px-2 pb-1">
+              <div className="flex gap-2 min-w-max">
+                <button
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setWritingExpanded(false);
+                    setSelectedWritingSubId(null);
+                  }}
+                  className={`h-12 px-4 rounded-xl border text-sm font-semibold flex items-center gap-2 shrink-0 transition-all ${selectedCategory === "all"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    : "bg-white text-slate-600 border-slate-200"
+                    }`}
+                >
+                  <span>全部</span>
+                  <span className={`text-[11px] px-1.5 py-0.5 rounded ${selectedCategory === "all" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"}`}>
+                    {categories.length}
+                  </span>
+                </button>
+
+                {categories.map((cat) => {
+                  const isActive = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        const isWriting = cat.id === "writing";
+                        setSelectedCategory(cat.id);
+                        setWritingExpanded(isWriting);
+                        setSelectedWritingSubId(isWriting ? (cat.links[0]?.id ?? null) : null);
+                      }}
+                      className={`h-12 px-4 rounded-xl border text-sm font-semibold flex items-center gap-2 shrink-0 transition-all ${isActive
+                        ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                        : "bg-white text-slate-600 border-slate-200"
+                        }`}
+                    >
+                      {getIcon(cat.icon)}
+                      <span>{cat.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* LEFT COLUMN: Categories Sidebar & Quick Stats (lg:col-span-3) */}
-          <div className="lg:col-span-3 flex flex-col gap-5">
+          <div className="hidden lg:col-span-3 lg:flex lg:flex-col gap-5">
 
             {/* Category Filter Bento */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 transition-colors duration-300 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">

@@ -1,0 +1,6 @@
+{
+  "name": "次元学术导航",
+  "description": "二次元萌系风格的学术科研与翻译聚合导航门户，配有智能AI萌娘助理、论文润色翻译，并支持自定义链接存储。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

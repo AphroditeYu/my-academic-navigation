@@ -38,6 +38,15 @@ import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./ty
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
 
 const ICONS_BASE_URL = "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/icons";
+const CNKI_ICON_URL = new URL("./assets/icon/中国知网.ico", import.meta.url).href;
+const STAR_PROTOCOLS_ICON_URL = "https://info.cell.com/hubfs/CP22171_STARProtocols_AllSubjectAreas_twitter_1200x675.jpg";
+
+const specialIconUrls: Record<string, string> = {
+  "cnki.net": CNKI_ICON_URL,
+  "www.cnki.net": CNKI_ICON_URL,
+  "cell.com": STAR_PROTOCOLS_ICON_URL,
+  "www.cell.com": STAR_PROTOCOLS_ICON_URL,
+};
 
 const faviconProviders = [
   (domain: string) => `${ICONS_BASE_URL}/${domain}.png`,
@@ -71,13 +80,17 @@ function normalizeIconDomain(logo?: string) {
 function SiteIcon({ logo, label, className = "w-5 h-5" }: { logo?: string; label?: string; className?: string }) {
   const marker = (label || "?").trim().slice(0, 1).toUpperCase();
   const domain = normalizeIconDomain(logo);
+  const iconSources = [
+    ...(specialIconUrls[domain] ? [specialIconUrls[domain]] : []),
+    ...faviconProviders.map((provider) => provider(domain)),
+  ];
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     setStep(0);
   }, [domain]);
 
-  if (!domain || step >= faviconProviders.length) {
+  if (!domain || step >= iconSources.length) {
     return (
       <span className={`${className} rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 inline-flex items-center justify-center shrink-0 text-[11px] font-bold leading-none`}>
         {marker}
@@ -85,7 +98,7 @@ function SiteIcon({ logo, label, className = "w-5 h-5" }: { logo?: string; label
     );
   }
 
-  const src = faviconProviders[step](domain);
+  const src = iconSources[step];
 
   return (
     <img
@@ -180,6 +193,7 @@ export default function App() {
 
   // Modals & popups
   const [activeModal, setActiveModal] = useState<"about" | "qr" | "group" | "cooperation" | null>(null);
+  const [previewQr, setPreviewQr] = useState<{ src: string; alt: string } | null>(null);
 
   // Diandian Cat Images State
   const [diandianIndex, setDiandianIndex] = useState<number>(0);
@@ -1317,13 +1331,21 @@ export default function App() {
                   </div>
 
                   {/* 二维码图片 */}
-                  <div className="w-48 h-48 rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewQr({
+                      src: "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/wechat_code.jpg",
+                      alt: "微信二维码"
+                    })}
+                    className="w-48 h-48 rounded-2xl shadow-xl overflow-hidden border border-gray-200 cursor-zoom-in bg-white p-0"
+                    aria-label="放大查看微信二维码"
+                  >
                     <img
                       src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/wechat_code.jpg"
                       alt="微信二维码"
                       className="w-full h-full object-cover"
                     />
-                  </div>
+                  </button>
 
                 </div>
 
@@ -1363,12 +1385,20 @@ export default function App() {
 
             {activeModal === "qr" && (
               <div className="text-center p-4">
-                <div className="w-44 h-44 bg-slate-50 border border-slate-200 mx-auto rounded-xl flex flex-col items-center justify-center p-3 relative">
+                <button
+                  type="button"
+                  onClick={() => setPreviewQr({
+                    src: "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg",
+                    alt: "微信公众号二维码"
+                  })}
+                  className="w-44 h-44 bg-slate-50 border border-slate-200 mx-auto rounded-xl flex flex-col items-center justify-center p-3 relative cursor-zoom-in"
+                  aria-label="放大查看微信公众号二维码"
+                >
                   {/* Styled fake cute QR indicator */}
                   <div className="w-full h-full bg-white border border-black rounded-lg p-1.5 flex flex-col justify-between text-emerald-400 font-mono text-[7px] text-left">
                     <img src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg" alt="微信公众号二维码" className="w-full h-full object-cover rounded-2xl" />
                   </div>
-                </div>
+                </button>
                 <h4 className="text-sm font-black text-slate-900 mt-4 font-serif">
                   微信搜一搜🔍关注：【猫不说AI论文】
                 </h4>
@@ -1402,6 +1432,22 @@ export default function App() {
                 知道啦✨
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {previewQr && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setPreviewQr(null)}
+        >
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl">
+            <img
+              src={previewQr.src}
+              alt={previewQr.alt}
+              className="w-full max-h-[76vh] object-contain rounded-xl"
+              style={{ WebkitTouchCallout: "default" }}
+            />
           </div>
         </div>
       )}

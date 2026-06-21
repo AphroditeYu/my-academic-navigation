@@ -34,15 +34,50 @@ import {
   ArrowRight,
   Phone
 } from "lucide-react";
-import MusicPlayer from "./MusicPlayer";
 import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./types";
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
 
-function SiteIcon({ logo, label, className = "w-5 h-5" }: { logo?: string; label?: string; className?: string }) {
-  const marker = (label || "站").trim().slice(0, 1).toUpperCase();
-  const [imgError, setImgError] = useState(false);
+const ICONS_BASE_URL = "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/icons";
 
-  if (!logo || imgError) {
+const faviconProviders = [
+  (domain: string) => `${ICONS_BASE_URL}/${domain}.png`,
+  (domain: string) => `https://${domain}/favicon.ico`,
+  (domain: string) => `https://${domain}/apple-touch-icon.png`,
+  (domain: string) => `https://api.iowen.cn/favicon/${domain}.png`,
+  (domain: string) => `https://unavatar.io/${domain}`,
+  (domain: string) => `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+  (domain: string) => `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=64`,
+  (domain: string) => `https://favicon.im/${domain}?larger=true`,
+];
+
+function normalizeIconDomain(logo?: string) {
+  if (!logo) return "";
+
+  const value = logo.trim();
+  if (!value) return "";
+
+  try {
+    const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return new URL(withProtocol).hostname.toLowerCase();
+  } catch {
+    return value
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/.*$/, "")
+      .replace(/:\d+$/, "")
+      .toLowerCase();
+  }
+}
+
+function SiteIcon({ logo, label, className = "w-5 h-5" }: { logo?: string; label?: string; className?: string }) {
+  const marker = (label || "?").trim().slice(0, 1).toUpperCase();
+  const domain = normalizeIconDomain(logo);
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    setStep(0);
+  }, [domain]);
+
+  if (!domain || step >= faviconProviders.length) {
     return (
       <span className={`${className} rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 inline-flex items-center justify-center shrink-0 text-[11px] font-bold leading-none`}>
         {marker}
@@ -50,14 +85,14 @@ function SiteIcon({ logo, label, className = "w-5 h-5" }: { logo?: string; label
     );
   }
 
-  // 提取干净的域名（去掉协议头、路径、末尾斜杠），保证传给favicon服务的是纯域名
-  const cleanDomain = logo.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const src = faviconProviders[step](domain);
 
   return (
     <img
-      src={`https://api.iowen.cn/favicon/${cleanDomain}.png`}
+      key={`${domain}-${step}`}
+      src={src}
       alt={marker}
-      onError={() => setImgError(true)}
+      onError={() => setStep((s) => s + 1)}
       className={`${className} rounded-md object-contain shrink-0 bg-white`}
     />
   );
@@ -132,12 +167,10 @@ export default function App() {
 
   // Navigation Sidebar collapsed on mobile
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
 
   // Expand/Collapse all categories
   const [allCategoriesExpanded, setAllCategoriesExpanded] = useState<boolean>(true);
-
-  // Mobile category tab list collapse (点击图标收起/展开分类网格)
-  const [mobileCategoryOpen, setMobileCategoryOpen] = useState<boolean>(true);
 
   const [writingExpanded, setWritingExpanded] = useState<boolean>(false);
   const [selectedWritingSubId, setSelectedWritingSubId] = useState<string | null>(null);
@@ -422,7 +455,7 @@ export default function App() {
   // Helper helper to get icon components safely
   const getIcon = (name: string) => {
     const cls = "w-4 h-4";
-    const svgs: Record<string, JSX.Element> = {
+    const svgs: Record<string, React.ReactElement> = {
       // 科研工具 - 烧瓶
       "Wrench": (
         <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -501,6 +534,21 @@ export default function App() {
     return svgs[name] ?? svgs["BookOpen"];
   };
 
+  // 论文写作子分类专用小图标（文献阅读/模板句式/文献综述/选研究方法/润色修改/格式排版/选刊神器）
+  const getWritingSubIcon = (id: string) => {
+    const cls = "w-4 h-4 shrink-0";
+    const icons: Record<string, React.ReactElement> = {
+      "w1": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14c-2-1.5-5-2-8-2V5c3 0 6 .5 8 2z" /><path d="M12 5v14c2-1.5 5-2 8-2V5c-3 0-6 .5-8 2z" /><path d="M12 5v14" /></svg>,
+      "w2": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16" /><path d="M4 10h16" /><path d="M4 14h12" /><path d="M4 18h12" /><circle cx="18" cy="16" r="3" /><path d="M18 13v-3" /></svg>,
+      "w3": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10H3" /><path d="M21 6H3" /><path d="M21 14H3" /><path d="M21 18H3" /><path d="M7 6v12" /><path d="M17 6v12" /></svg>,
+      "w4": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="18" cy="6" r="3" /><circle cx="12" cy="18" r="3" /><path d="M6 9v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9" /><path d="M12 12v3" /></svg>,
+      "w5": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /><path d="m15 5 3 3" /></svg>,
+      "w6": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M8 9h8" /><path d="M8 13h6" /><path d="M8 17h4" /></svg>,
+      "w7": <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><circle cx="14" cy="9" r="3" /><path d="m16 11 3.5 3.5" /></svg>,
+    };
+    return icons[id] ?? <ChevronRight className={cls} />;
+  };
+
   // Aggregate user custom bookmarks and standard links per category
   const getCombinedLinks = (category: Category) => {
     const standard = category.links;
@@ -560,13 +608,31 @@ export default function App() {
 
         {/* ================================= HEADER SECTION ================================= */}
         <header className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-5 py-3 sticky top-0 z-20 transition-colors duration-300">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-300 dark:border-slate-700 bg-slate-900 dark:bg-white text-white dark:text-slate-900">
-              <BookOpen className="w-4.5 h-4.5" />
+          <div className="flex items-center justify-between w-full md:w-auto gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-300 dark:border-slate-700 bg-slate-900 dark:bg-white text-white dark:text-slate-900 shrink-0">
+                <BookOpen className="w-4.5 h-4.5" />
+              </div>
+              <h1
+                className={`text-lg font-bold tracking-tight leading-none text-slate-900 dark:text-slate-100 whitespace-nowrap overflow-hidden transition-all duration-300 ease-out max-w-[180px] opacity-100 ${sidebarOpen ? "lg:max-w-[180px] lg:opacity-100" : "lg:max-w-0 lg:opacity-0"}`}
+              >
+                科研学术导航
+              </h1>
             </div>
-            <h1 className="text-lg font-bold tracking-tight leading-none text-slate-900 dark:text-slate-100">
-              科研学术导航
-            </h1>
+            <button
+              onClick={() => {
+                setSidebarOpen(!sidebarOpen);
+                setMobileDrawerOpen(!mobileDrawerOpen);
+              }}
+              title={sidebarOpen ? "收起导航栏" : "展开导航栏"}
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="15" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
           </div>
 
           {/* Quick Header Navigation Links */}
@@ -624,214 +690,257 @@ export default function App() {
           </div>
         </header>
 
-        {/* ================================= MAIN CONTENT BENTO GRID ================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
-            <button
-              onClick={() => setMobileCategoryOpen(!mobileCategoryOpen)}
-              className="w-full flex items-center justify-between mb-2 cursor-pointer"
-            >
-              <span className="font-semibold text-sm flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                🧭&nbsp;学术分类
+        {/* 左侧抽屉遮罩层（仅移动端）：点击汉堡图标打开时显示，点击遮罩可关闭 */}
+        {mobileDrawerOpen && (
+          <div
+            onClick={() => { setSidebarOpen(false); setMobileDrawerOpen(false); }}
+            className="lg:hidden fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
+          />
+        )}
+
+        {/* 左侧抽屉导航（仅移动端）：固定在视口最左边，靠 transform 滑入滑出 */}
+        <div
+          className="lg:hidden fixed top-0 left-0 h-full w-[280px] max-w-[85vw] bg-white dark:bg-slate-900 z-50 shadow-2xl overflow-y-auto transition-transform duration-350 ease-in-out"
+          style={{ transform: mobileDrawerOpen ? "translateX(0)" : "translateX(-100%)" }}
+        >
+          <div className="p-4">
+            <div className="mb-5 flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center border border-slate-300 dark:border-slate-700 bg-slate-900 dark:bg-white text-white dark:text-slate-900 shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <span className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                科研学术导航
               </span>
-              <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${mobileCategoryOpen ? "rotate-90" : ""}`} />
-            </button>
-
-            <div
-              style={{
-                maxHeight: mobileCategoryOpen ? "1200px" : "0px",
-                overflow: "hidden",
-                transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
-                opacity: mobileCategoryOpen ? 1 : 0,
-              }}
-            >
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  setSelectedCategory("all");
-                  setWritingExpanded(false);
-                  setSelectedWritingSubId(null);
-                }}
-                className={`min-h-[64px] rounded-xl border px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-all ${selectedCategory === "all"
-                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
-                  }`}
-              >
-                <span className="font-semibold text-sm">全部</span>
-                <span className={`text-[11px] px-2 py-0.5 rounded ${selectedCategory === "all" ? "bg-white/15 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
-                  {categories.length}
-                </span>
-              </button>
-
-              {categories.map((cat) => {
-                const isActive = selectedCategory === cat.id;
-                const isWriting = cat.id === "writing";
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategory(cat.id);
-                      setWritingExpanded(isWriting);
-                      setSelectedWritingSubId(isWriting ? (selectedWritingSubId || cat.links[0]?.id || null) : null);
-                    }}
-                    className={`min-h-[64px] rounded-xl border px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-all ${isActive
-                      ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
-                      }`}
-                  >
-                    <span className="flex items-center gap-2 min-w-0">
-                      {getIcon(cat.icon)}
-                      <span className="font-semibold text-sm truncate">{cat.name}</span>
-                    </span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded shrink-0 ${isActive ? "bg-white/15 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
-                      {getCombinedLinks(cat).length}
-                    </span>
-                  </button>
-                );
-              })}
             </div>
-
-            {selectedCategory === "writing" && (
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <div className="grid grid-cols-2 gap-2">
-                  {(categories.find(c => c.id === "writing")?.links || []).map((link: any) => {
-                    const isActive = selectedWritingSubId === link.id;
+            <div className="space-y-2 md:space-y-2.5">
+                  {categories.map((cat, idx) => {
+                    const combinedCount = getCombinedLinks(cat).length;
+                    const isWriting = cat.id === "writing";
                     return (
-                      <button
-                        key={link.id}
-                        onClick={() => setSelectedWritingSubId(link.id)}
-                        className={`min-h-[44px] rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-all ${isActive
-                          ? "bg-slate-900 text-white border-slate-900"
-                          : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}
-                      >
-                        {link.name}
-                      </button>
+                      <div key={cat.id}>
+                        <button
+                          onClick={() => {
+                            if (isWriting) {
+                              setWritingExpanded(!writingExpanded);
+                              setSelectedCategory(cat.id);
+                            } else {
+                              setWritingExpanded(false);
+                              setSelectedWritingSubId(null);
+                              setSelectedCategory(cat.id);
+                            }
+                          }}
+                          style={{
+                            transitionDelay: `${idx * 35}ms`,
+                            transform: "translateY(0) scale(1)",
+                            opacity: 1,
+                            transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease",
+                          }}
+                          className={`w-full flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === cat.id
+                            ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                            : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
+                            }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {getIcon(cat.icon)}
+                            <span>{cat.name}</span>
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] px-2 py-0.5 rounded">
+                              {combinedCount}
+                            </span>
+                            <ChevronRight className={`w-4 h-4 opacity-60 transition-transform duration-300 ${isWriting && writingExpanded ? "rotate-90" : ""}`} />
+                          </div>
+                        </button>
+
+                        {isWriting && (
+                          <div
+                            style={{
+                              maxHeight: writingExpanded ? `${cat.links.length * 48 + 12}px` : "0px",
+                              overflow: "hidden",
+                              transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
+                              opacity: writingExpanded ? 1 : 0,
+                            }}
+                          >
+                            <div className="ml-3 mt-1.5 space-y-2 border-l border-slate-200 dark:border-slate-800 pl-3">
+                              {cat.links.map((link: any) => (
+                                <button
+                                  key={link.id}
+                                  onClick={() => setSelectedWritingSubId(selectedWritingSubId === link.id ? null : link.id)}
+                                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all cursor-pointer ${selectedWritingSubId === link.id
+                                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border-transparent"
+                                    }`}
+                                >
+                                  <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
+                                  {link.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
-                </div>
-              </div>
-            )}
             </div>
           </div>
+        </div>
 
-          {/* LEFT COLUMN: Categories Sidebar & Quick Stats (lg:col-span-3) */}
-          <div className="hidden lg:col-span-3 lg:flex lg:flex-col gap-5">
+        {/* ================================= MAIN CONTENT BENTO GRID ================================= */}
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
 
-            {/* Category Filter Bento */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 transition-colors duration-300 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                <span className="font-semibold text-sm flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                  🧭&nbsp;&nbsp;学术科研导航指引
-                </span>
-              </div>
+          {/* 桌面端常驻可伸缩侧栏：点击汉堡图标在"完整列表"与"仅图标"两种宽度间平滑过渡，不浮层、不挡内容 */}
+          <div
+            className={`relative z-30 hidden lg:flex lg:flex-col gap-5 shrink-0 transition-[width] duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] ${sidebarOpen ? "overflow-hidden" : "overflow-visible"}`}
+            style={{ width: sidebarOpen ? "280px" : "76px" }}
+          >
+            <div
+              className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 transition-colors duration-300 lg:sticky lg:top-20 ${sidebarOpen ? "lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto" : "lg:overflow-visible"}`}
+              style={{
+                minHeight: !sidebarOpen && writingExpanded
+                  ? `${(categories.length + 1) * 56 + ((categories.find(c => c.id === "writing")?.links.length || 0) * 48) + 24}px`
+                  : undefined,
+              }}
+            >
+              <div className="flex flex-col gap-2">
+                {/* 全部 */}
+                <div className="relative group/navtip">
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("all");
+                      setWritingExpanded(false);
+                      setSelectedWritingSubId(null);
+                    }}
+                    className={`flex items-center py-2.5 rounded-lg border text-sm font-medium transition-colors duration-300 text-left cursor-pointer ${sidebarOpen ? "w-full gap-3 px-3.5" : "mx-auto h-12 w-12 justify-center px-0"} ${selectedCategory === "all"
+                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                      : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
+                      }`}
+                  >
+                    <Layers className="w-4.5 h-4.5 shrink-0" />
+                    {sidebarOpen && (
+                      <>
+                        <span className="whitespace-nowrap transition-all duration-300 ease-out">
+                          全部
+                        </span>
+                        <span className="ml-auto shrink-0 transition-all duration-300 ease-out">
+                          <span className={`text-[11px] px-2 py-0.5 rounded whitespace-nowrap ${selectedCategory === "all" ? "bg-white/15 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+                            {categories.length}
+                          </span>
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  {!sidebarOpen && (
+                    <span className="pointer-events-none absolute left-full top-0 z-[80] ml-3 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/navtip:opacity-100 whitespace-nowrap">
+                      全部
+                    </span>
+                  )}
+                </div>
 
-              <div className={`space-y-2 md:space-y-2.5 ${sidebarOpen ? "block" : "hidden md:block"}`}>
-                <button
-                  onClick={() => {
-                    setAllCategoriesExpanded(!allCategoriesExpanded);
-                    setSelectedCategory("all");
-                    setWritingExpanded(false);
-                    setSelectedWritingSubId(null);
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === "all"
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
-                    : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
-                    }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>{allCategoriesExpanded ? "合上全部学术分类" : "展开全部学术分类"}</span>
-                  </span>
-                  <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${allCategoriesExpanded ? "rotate-90" : ""}`} />
-                </button>
-
-                <div
-                  style={{
-                    maxHeight: allCategoriesExpanded
-                      ? `${categories.length * 68 + (writingExpanded ? (categories.find(c => c.id === "writing")?.links.length || 0) * 48 + 40 : 0)}px`
-                      : "0px",
-                    overflow: "hidden",
-                    transition: "max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease",
-                    opacity: allCategoriesExpanded ? 1 : 0,
-                  }}
-                >
-                  <div className="space-y-2 md:space-y-2.5 pt-1.5">
-                    {categories.map((cat, idx) => {
-                      const combinedCount = getCombinedLinks(cat).length;
-                      const isWriting = cat.id === "writing";
-                      return (
-                        <div key={cat.id}>
-                          <button
-                            onClick={() => {
-                              if (isWriting) {
-                                setWritingExpanded(!writingExpanded);
-                                setSelectedCategory(cat.id);
-                              } else {
-                                setWritingExpanded(false);
-                                setSelectedWritingSubId(null);
-                                setSelectedCategory(cat.id);
-                              }
-                            }}
-                            style={{
-                              transitionDelay: allCategoriesExpanded ? `${idx * 40}ms` : "0ms",
-                              transform: allCategoriesExpanded ? "translateY(0) scale(1)" : "translateY(-8px) scale(0.97)",
-                              opacity: allCategoriesExpanded ? 1 : 0,
-                              transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease",
-                            }}
-                            className={`w-full flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 rounded-lg border text-sm font-medium transition-all text-left cursor-pointer ${selectedCategory === cat.id
-                              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
-                              : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
-                              }`}
-                          >
-                            <span className="flex items-center gap-2">
-                              {getIcon(cat.icon)}
-                              <span>{cat.name}</span>
+                {/* 分类列表 */}
+                {categories.map((cat, idx) => {
+                  const combinedCount = getCombinedLinks(cat).length;
+                  const isWriting = cat.id === "writing";
+                  const isActive = selectedCategory === cat.id;
+                  return (
+                    <div key={cat.id} className="relative">
+                      <button
+                        onClick={() => {
+                          if (isWriting) {
+                            setWritingExpanded(!writingExpanded);
+                            setSelectedCategory(cat.id);
+                          } else {
+                            setWritingExpanded(false);
+                            setSelectedWritingSubId(null);
+                            setSelectedCategory(cat.id);
+                          }
+                        }}
+                        className={`group/mainbtn relative flex items-center py-2.5 rounded-lg border text-sm font-medium transition-colors duration-300 text-left cursor-pointer ${sidebarOpen ? "w-full gap-3 px-3.5" : "mx-auto h-12 w-12 justify-center px-0"} ${isActive
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                          : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-300 dark:border-slate-800"
+                          }`}
+                      >
+                        <span className="shrink-0">{getIcon(cat.icon)}</span>
+                        {sidebarOpen && (
+                          <>
+                            <span className="whitespace-nowrap transition-all duration-300 ease-out">
+                              {cat.name}
                             </span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] px-2 py-0.5 rounded">
+                            <div className="ml-auto shrink-0 flex items-center gap-1.5 transition-all duration-300 ease-out">
+                              <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] px-2 py-0.5 rounded whitespace-nowrap">
                                 {combinedCount}
                               </span>
-                              <ChevronRight className={`w-4 h-4 opacity-60 transition-transform duration-300 ${isWriting && writingExpanded ? "rotate-90" : ""}`} />
+                              <ChevronRight className={`w-4 h-4 opacity-60 shrink-0 transition-transform duration-300 ${isWriting && writingExpanded ? "rotate-90" : ""}`} />
                             </div>
-                          </button>
+                          </>
+                        )}
+                        {!sidebarOpen && (
+                          <span className="pointer-events-none absolute left-full top-0 z-[80] ml-3 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/mainbtn:opacity-100 whitespace-nowrap">
+                            {cat.name}
+                          </span>
+                        )}
+                        </button>
 
-                          {isWriting && (
-                            <div
-                              style={{
-                                maxHeight: writingExpanded ? `${cat.links.length * 48 + 12}px` : "0px",
-                                overflow: "hidden",
-                                transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
-                                opacity: writingExpanded ? 1 : 0,
-                              }}
-                            >
-                              <div className="ml-3 mt-1.5 space-y-2 border-l border-slate-200 dark:border-slate-800 pl-3">
-                                {cat.links.map((link: any) => (
-                                  <button
-                                    key={link.id}
-                                    onClick={() => setSelectedWritingSubId(selectedWritingSubId === link.id ? null : link.id)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all cursor-pointer ${selectedWritingSubId === link.id
-                                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
-                                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border-transparent"
-                                      }`}
-                                  >
-                                    <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
-                                    {link.name}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                        {/* 展开状态（带文字）：子分类列表带图标，正常内嵌在侧栏里 */}
+                      {isWriting && sidebarOpen && (
+                        <div
+                          style={{
+                            maxHeight: writingExpanded ? `${cat.links.length * 48 + 12}px` : "0px",
+                            overflow: "hidden",
+                            transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
+                            opacity: writingExpanded ? 1 : 0,
+                          }}
+                        >
+                          <div className="ml-3 mt-1.5 space-y-2 border-l border-slate-200 dark:border-slate-800 pl-3">
+                            {cat.links.map((link: any) => (
+                              <button
+                                key={link.id}
+                                onClick={() => setSelectedWritingSubId(selectedWritingSubId === link.id ? null : link.id)}
+                                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all cursor-pointer ${selectedWritingSubId === link.id
+                                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border-transparent"
+                                  }`}
+                              >
+                                {getWritingSubIcon(link.id)}
+                                {link.name}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      )}
+
+                      {/* 收起状态（仅图标）：点击"论文写作"后，在侧栏内展开子分类图标 */}
+                      {isWriting && !sidebarOpen && writingExpanded && (
+                        <div
+                          className="mt-1.5 flex flex-col items-center gap-1.5"
+                        >
+                          {cat.links.map((link: any, subIdx: number) => (
+                            <div key={link.id} className="relative group/subtip">
+                              <button
+                                onClick={() => setSelectedWritingSubId(selectedWritingSubId === link.id ? null : link.id)}
+                                style={{ transitionDelay: `${subIdx * 30}ms` }}
+                                className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-medium transition-colors cursor-pointer ${selectedWritingSubId === link.id
+                                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800 dark:hover:bg-slate-800 dark:hover:text-white"
+                                  }`}
+                              >
+                                {getWritingSubIcon(link.id)}
+                              </button>
+                              <span className="pointer-events-none absolute left-full top-0 z-[80] ml-3 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/subtip:opacity-100 whitespace-nowrap">
+                                {link.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* MIDDLE COLUMN: Search Panel & Academic Lists (lg:col-span-6) */}
-          <div className="lg:col-span-6 flex flex-col gap-5 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
+          {/* MIDDLE COLUMN: Search Panel & Academic Lists - flex-1自动填充剩余空间，侧栏收起时自动变宽 */}
+          <div className="flex-1 min-w-0 w-full flex flex-col gap-5 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
 
             {/* CATEGORY DIRECTORY GRID (Rendering filtered results as beautiful Bento Cards) */}
             <div className="space-y-6">
@@ -857,7 +966,7 @@ export default function App() {
                     {/* Category Title Header */}
                     {(() => {
                       // 论文写作子分类选中时，标题显示子分类名称和图标
-                      const writingSubIconMap: Record<string, JSX.Element> = {
+                      const writingSubIconMap: Record<string, React.ReactElement> = {
                         "w1": <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14c-2-1.5-5-2-8-2V5c3 0 6 .5 8 2z" /><path d="M12 5v14c2-1.5 5-2 8-2V5c-3 0-6 .5-8 2z" /><path d="M12 5v14" /></svg>,
                        "w2": <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16" /><path d="M4 10h16" /><path d="M4 14h12" /><path d="M4 18h12" /><circle cx="18" cy="16" r="3" /><path d="M18 13v-3" /></svg>,
                         "w3": <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10H3" /><path d="M21 6H3" /><path d="M21 14H3" /><path d="M21 18H3" /><path d="M7 6v12" /><path d="M17 6v12" /></svg>,
@@ -905,86 +1014,122 @@ export default function App() {
                     })()}
 
                     {/* Standard & custom grid links inside category */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3.5">
-                      {cat.links.map((link: any) => {
-                        // 论文写作分类且有subLinks：选中时展示子工具，未选中时隐藏
-                        if (link.subLinks) {
-                          if (selectedWritingSubId === link.id) {
-                            return link.subLinks.map((sub: any, subIdx: number) => (
-                              <a
-                                key={sub.id}
-                                href={sub.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ animationDelay: `${subIdx * 60}ms` }}
-                                className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900 animate-fade-in-sub"
-                              >
-                                <div>
-                                  <div className="flex items-center justify-between gap-1 mb-1">
-                                    <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
-                                      {sub.logo && <SiteIcon logo={sub.logo} label={sub.name} />}
-                                      {sub.name}
-                                    </span>
+                    {cat.id === "writing" && selectedWritingSubId === null ? (
+                      <div className="space-y-6">
+                        {cat.links.filter((link: any) => link.subLinks).map((link: any) => (
+                          <section key={link.id} className="space-y-2.5">
+                            <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                              <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 inline-flex items-center justify-center shrink-0">
+                                {getWritingSubIcon(link.id)}
+                              </span>
+                              <div>
+                                <h4 className="text-sm font-semibold leading-tight">{link.name}</h4>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">{link.description}</p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3.5">
+                              {link.subLinks.map((sub: any, subIdx: number) => (
+                                <a
+                                  key={sub.id}
+                                  href={sub.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ animationDelay: `${subIdx * 40}ms` }}
+                                  className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900 animate-fade-in-sub"
+                                >
+                                  <div>
+                                    <div className="flex items-center justify-between gap-1 mb-1">
+                                      <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
+                                        {sub.logo && <SiteIcon logo={sub.logo} label={sub.name} />}
+                                        {sub.name}
+                                      </span>
+                                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-3">
+                                      {sub.description}
+                                    </p>
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          </section>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3.5">
+                        {cat.links.map((link: any) => {
+                          if (link.subLinks) {
+                            if (selectedWritingSubId === link.id) {
+                              return link.subLinks.map((sub: any, subIdx: number) => (
+                                <a
+                                  key={sub.id}
+                                  href={sub.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ animationDelay: `${subIdx * 60}ms` }}
+                                  className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900 animate-fade-in-sub"
+                                >
+                                  <div>
+                                    <div className="flex items-center justify-between gap-1 mb-1">
+                                      <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
+                                        {sub.logo && <SiteIcon logo={sub.logo} label={sub.name} />}
+                                        {sub.name}
+                                      </span>
+                                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-3">
+                                      {sub.description}
+                                    </p>
+                                  </div>
+                                </a>
+                              ));
+                            }
+                            return null;
+                          }
+                          return (
+                            <a
+                              key={link.id}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-1 mb-1">
+                                  <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
+                                    {link.logo ? <SiteIcon logo={link.logo} label={link.name} /> : link.isCustom ? <SiteIcon label={link.name} /> : null}
+                                    {link.name}
+                                  </span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {link.isCustom && (
+                                      <button
+                                        onClick={(e) => handleDeleteBookmark(link.id, e)}
+                                        className="text-slate-300 dark:text-slate-600 hover:text-rose-500 p-0.5 rounded cursor-pointer"
+                                        title="删除此自定义"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
                                     <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
                                   </div>
-                                  <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-3">
-                                    {sub.description}
-                                  </p>
                                 </div>
-                              </a>
-                            ));
-                          }
-                          // 未选中的writing子分类不渲染
-                          return null;
-                        }
-                        // 正常卡片渲染
-                        return (
-                          <a
-                            key={link.id}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group border border-slate-200 dark:border-slate-800 rounded-lg md:rounded-xl p-3 md:p-3.5 transition-all text-left relative flex flex-col justify-between min-h-[72px] sm:h-24 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-900"
-                          >
-                            <div>
-                              <div className="flex items-center justify-between gap-1 mb-1">
-                                <span className="font-semibold text-xs md:text-sm text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors flex items-center gap-2">
-                                  {link.logo ? <SiteIcon logo={link.logo} label={link.name} /> : link.isCustom ? <SiteIcon label={link.name} /> : null}
-                                  {link.name}
-                                </span>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {link.isCustom && (
-                                    <button
-                                      onClick={(e) => handleDeleteBookmark(link.id, e)}
-                                      className="text-slate-300 dark:text-slate-600 hover:text-rose-500 p-0.5 rounded cursor-pointer"
-                                      title="删除此自定义"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                  <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all shrink-0" />
-                                </div>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-2">
+                                  {link.description}
+                                </p>
                               </div>
-                              <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight line-clamp-1 sm:line-clamp-2">
-                                {link.description}
-                              </p>
-                            </div>
-                          </a>
-                        );
-                      })}
-                    </div>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* RIGHT COLUMN: AI Anime Companions & Retro Study Player (lg:col-span-3) */}
-          <div className="lg:col-span-3 flex flex-col gap-5">
-
-
-
-            <MusicPlayer />
+          {/* RIGHT COLUMN: AI Anime Companions & Retro Study Player */}
+          <div className="w-full lg:w-[300px] lg:shrink-0 flex flex-col gap-5">
 
             {/* Diandian Cat Slideshow Card - 自动轮播 */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 relative flex flex-col gap-2.5 transition-colors duration-300">

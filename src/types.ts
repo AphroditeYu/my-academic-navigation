@@ -3,10 +3,11 @@ export interface NavigationLink {
   name: string;
   url: string;
   description: string;
+  logo?: string;
   icon?: string; // Optional custom cute emoji or lucide icon name
   tags?: string[];
   isPopular?: boolean;
-  subLinks?: { id: string; name: string; url: string; description: string }[];
+  subLinks?: { id: string; name: string; url: string; description: string; logo?: string }[];
 }
 
 export interface Category {

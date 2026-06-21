@@ -354,7 +354,7 @@ export const INITIAL_CATEGORIES: Category[] = [
             id: "w1-2",
             name: "Ponder",
             url: "https://ponder.ing/zh",
-            logo: "ponder.ing/zh",
+            logo: "ponder.ing",
             description: "AI学术阅读与知识整理工具，可对论文内容进行总结、提问与结构化理解。"
           },
           {

@@ -1331,12 +1331,21 @@ export default function App() {
                   </div>
 
                   {/* 二维码图片 */}
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setPreviewQr({
                       src: "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/wechat_code.jpg",
                       alt: "微信二维码"
                     })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setPreviewQr({
+                          src: "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/wechat_code.jpg",
+                          alt: "微信二维码"
+                        });
+                      }
+                    }}
                     className="w-48 h-48 rounded-2xl shadow-xl overflow-hidden border border-gray-200 cursor-zoom-in bg-white p-0"
                     aria-label="放大查看微信二维码"
                   >
@@ -1344,8 +1353,9 @@ export default function App() {
                       src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/wechat_code.jpg"
                       alt="微信二维码"
                       className="w-full h-full object-cover"
+                      style={{ WebkitTouchCallout: "default", userSelect: "auto" }}
                     />
-                  </button>
+                  </div>
 
                 </div>
 
@@ -1385,20 +1395,34 @@ export default function App() {
 
             {activeModal === "qr" && (
               <div className="text-center p-4">
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setPreviewQr({
                     src: "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg",
                     alt: "微信公众号二维码"
                   })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setPreviewQr({
+                        src: "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg",
+                        alt: "微信公众号二维码"
+                      });
+                    }
+                  }}
                   className="w-44 h-44 bg-slate-50 border border-slate-200 mx-auto rounded-xl flex flex-col items-center justify-center p-3 relative cursor-zoom-in"
                   aria-label="放大查看微信公众号二维码"
                 >
                   {/* Styled fake cute QR indicator */}
                   <div className="w-full h-full bg-white border border-black rounded-lg p-1.5 flex flex-col justify-between text-emerald-400 font-mono text-[7px] text-left">
-                    <img src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg" alt="微信公众号二维码" className="w-full h-full object-cover rounded-2xl" />
+                    <img
+                      src="https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/images/qrcode.jpg"
+                      alt="微信公众号二维码"
+                      className="w-full h-full object-cover rounded-2xl"
+                      style={{ WebkitTouchCallout: "default", userSelect: "auto" }}
+                    />
                   </div>
-                </button>
+                </div>
                 <h4 className="text-sm font-black text-slate-900 mt-4 font-serif">
                   微信搜一搜🔍关注：【猫不说AI论文】
                 </h4>
@@ -1441,12 +1465,15 @@ export default function App() {
           className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setPreviewQr(null)}
         >
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl">
+          <div
+            className="relative w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
               src={previewQr.src}
               alt={previewQr.alt}
               className="w-full max-h-[76vh] object-contain rounded-xl"
-              style={{ WebkitTouchCallout: "default" }}
+              style={{ WebkitTouchCallout: "default", userSelect: "auto", pointerEvents: "auto" }}
             />
           </div>
         </div>

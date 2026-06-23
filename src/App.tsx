@@ -741,6 +741,7 @@ export default function App() {
                               setWritingExpanded(false);
                               setSelectedWritingSubId(null);
                               setSelectedCategory(cat.id);
+                              setMobileDrawerOpen(false);
                             }
                           }}
                           style={{
@@ -779,7 +780,10 @@ export default function App() {
                               {cat.links.map((link: any) => (
                                 <button
                                   key={link.id}
-                                  onClick={() => setSelectedWritingSubId(selectedWritingSubId === link.id ? null : link.id)}
+                                  onClick={() => {
+                                    setSelectedWritingSubId(selectedWritingSubId === link.id ? null : link.id);
+                                    setMobileDrawerOpen(false);
+                                  }}
                                   className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all cursor-pointer ${selectedWritingSubId === link.id
                                     ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
                                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border-transparent"

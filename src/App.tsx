@@ -1196,7 +1196,17 @@ export default function App() {
 
         {/* ================================= FOOTER INFO BLOCK ================================= */}
         <footer className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-600 leading-relaxed">
-          本站为网址导航网站，收录内容来自网络和广大网友，尽管我会进行人工审核，但不对收录网站内容的真实性和潜在风险负责，请自行甄别和防范风险。
+          <p>本站为网址导航网站，收录内容来自网络和广大网友，尽管我会进行人工审核，但不对收录网站内容的真实性和潜在风险负责，请自行甄别和防范风险。</p>
+          <p className="mt-1">
+            <a
+              href="http://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-500 dark:hover:text-slate-400 transition-colors"
+            >
+              湘ICP备2026025348号
+            </a>
+          </p>
         </footer>
 
       </div>

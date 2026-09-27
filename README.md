@@ -1,0 +1,1 @@
+It comprises eight modules: research tools, Chinese literature, English literature, scientific illustration, paper writing (literature reading, template phrases, literature reviews, research methodology selection, polishing and editing, formatting and layout, and journal selection tools), literature management, funding projects, and productivity tools.

@@ -87,6 +87,13 @@ export const INITIAL_CATEGORIES: Category[] = [
         logo: "lcpmgh.com",
         description: "面向科研绘图的在线配色工具，提供多种预设顶刊配色方案，并支持自定义颜色组合与可视化预览。",
       },
+      {
+        id: "t11",
+        name: "Stanford STORM",
+        url: "https://storm.genie.stanford.edu/",
+        logo: "storm.genie.stanford.edu",
+        description: "Stanford 提供的 AI 辅助科研写作与知识整理工具，可围绕主题生成结构化综述与研究草稿。",
+      },
     ]
   },
   //中文文献

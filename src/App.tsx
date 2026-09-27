@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { Category, CharacterPreset, ChatHistoryItem, CustomBookmark } from "./types";
 import { INITIAL_CATEGORIES, CHARACTER_PRESETS } from "./data";
+import { diandianImages } from "./diandian";
 
 const ICONS_BASE_URL = "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com/icons";
 const CNKI_ICON_URL = new URL("./assets/icon/中国知网.ico", import.meta.url).href;
@@ -198,41 +199,6 @@ export default function App() {
   // Diandian Cat Images State
   const [diandianIndex, setDiandianIndex] = useState<number>(0);
   const [diandianPets, setDiandianPets] = useState<number>(0);
-  const ASSETS_BASE_URL = "https://mysite-1316679115.cos.ap-guangzhou.myqcloud.com";
-  const diandianImages = [
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose1.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose2.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose3.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose4.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose5.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose6.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose7.jpg`,
-      description: ""
-    },
-    {
-      src: `${ASSETS_BASE_URL}/images/diandian_pose8.jpg`,
-      description: ""
-    }
-  ];
 
   // Music Player State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -1160,13 +1126,13 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden relative group w-full h-64">
+              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden relative group w-full h-80">
                 <img
                   key={diandianIndex}
                   src={diandianImages[diandianIndex].src}
-                  alt="我的猫：点点"
+                  alt={diandianImages[diandianIndex].alt}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain animate-fade-in"
+                  className="w-full h-full object-cover object-center animate-fade-in"
                 />
                 <button
                   onClick={() => setDiandianPets(diandianPets + 1)}
@@ -1177,10 +1143,13 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="flex justify-center items-center gap-1.5">
-                {diandianImages.map((_: any, i: number) => (
+              <div className="flex flex-wrap justify-center items-center gap-1.5">
+                {diandianImages.map((photo, i) => (
                   <button
-                    key={i}
+                    key={photo.src}
+                    type="button"
+                    aria-label={`查看点点第 ${i + 1} 张照片`}
+                    aria-pressed={i === diandianIndex}
                     onClick={() => setDiandianIndex(i)}
                     className={`rounded-full transition-all duration-300 cursor-pointer ${i === diandianIndex
                       ? "w-4 h-1.5 bg-slate-700 dark:bg-slate-300"
@@ -1196,7 +1165,17 @@ export default function App() {
 
         {/* ================================= FOOTER INFO BLOCK ================================= */}
         <footer className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-600 leading-relaxed">
-          本站为网址导航网站，收录内容来自网络和广大网友，尽管我会进行人工审核，但不对收录网站内容的真实性和潜在风险负责，请自行甄别和防范风险。
+          <p>本站为网址导航网站，收录内容来自网络和广大网友，尽管我会进行人工审核，但不对收录网站内容的真实性和潜在风险负责，请自行甄别和防范风险。</p>
+          <p className="mt-1">
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-500 dark:hover:text-slate-400 transition-colors"
+            >
+              湘ICP备2026025348号-1
+            </a>
+          </p>
         </footer>
 
       </div>

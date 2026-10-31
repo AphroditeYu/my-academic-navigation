@@ -1407,7 +1407,7 @@ export default function App() {
                   </div>
                 </div>
                 <h4 className="text-sm font-black text-slate-900 mt-4 font-serif">
-                  微信搜一搜🔍关注：【猫不说AI论文】
+                  微信搜一搜🔍关注：【猫不说AI科研】
                 </h4>
 
               </div>
